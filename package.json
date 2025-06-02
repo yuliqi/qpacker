@@ -1,0 +1,49 @@
+{
+  "name": "qpacker",
+  "version": "2.0.0",
+  "description": "A lightweight compact data packer/unpacker with base64url encoding",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest",
+    "prepare": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuliqi/qpacker.git"
+  },
+  "keywords": [
+    "compact",
+    "packer",
+    "unpacker",
+    "base64url",
+    "serialization",
+    "qpacker"
+  ],
+  "author": "qiqi <qiqi@qiqid.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14"
+  },
+  "homepage": "https://github.com/yuliqi/qpacker#readme",
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "vitest": "^1.0.0"
+  }
+}
