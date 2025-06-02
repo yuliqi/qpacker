@@ -30,23 +30,44 @@ npm install qpacker
 ### 🚀 Quick Start
 
 ```ts
-import { QPacker } from 'qpacker';
+import { QPacker, QPackerError } from 'QPacker';
+const fields = ['userId', 'username', 'role'];
+const packer = new QPacker(fields);
 
-const qp = new QPacker(['uid', 'role', 'exp']);
+try {
+  // 1. pack
+  const token = packer.pack({ userId: '123', username: 'alice', role: 'admin' });
+  console.log('Packed token:', token);
 
-const token = qp.pack({ uid: '123', role: 'admin', exp: '9999' });
-console.log(token);
+  // 2. unpack
+  const data = packer.unpack(token);
+  console.log('Unpacked data:', data);
 
-const data = qp.unpack(token);
-console.log(data);
-```
+  // 3. mutate token 中某字段
+  const newToken = packer.mutate(token, { role: 'superadmin' });
+  console.log('Mutated token:', newToken);
 
-### 🔧 Field Mutation
+  // 4. unpack token
+  const newData = packer.unpack(newToken);
+  console.log('Unpacked mutated data:', newData);
 
-```ts
-const newToken = qp.mutate(token, { role: 'superadmin' });
-const newData = qp.unpack(newToken);
-console.log(newData);
+} catch (error) {
+  if (error instanceof QPackerError) {
+    console.error('QPacker error:', error.message);
+  } else {
+    console.error('Unexpected error:', error);
+  }
+}
+
+// 5. test error token
+try {
+  packer.unpack('invalid.token.string');
+} catch (error) {
+  if (error instanceof QPackerError) {
+    console.error('Expected QPacker error on invalid token:', error.message);
+  }
+}
+
 ```
 
 ### 🧩 API Reference

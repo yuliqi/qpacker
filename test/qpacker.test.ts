@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { QPacker } from '../src/index';
+import { QPacker, QPackerError } from '../src/index';
+
+const fields = ['userId', 'username', 'role'];
+const packer = new QPacker(fields);
 
 describe('QPacker', () => {
-  const fields = ['a', 'b', 'c'];
-  const packer = new QPacker(fields);
-
   it('should pack and unpack correctly', () => {
-    const data = { a: 'hello', b: 'world', c: '!' };
+    const data = { userId: '123', username: 'alice', role: 'admin' };
     const token = packer.pack(data);
     expect(typeof token).toBe('string');
 
@@ -14,28 +14,36 @@ describe('QPacker', () => {
     expect(unpacked).toEqual(data);
   });
 
-  it('should handle missing fields as empty string', () => {
-    const data = { a: 'foo' };
-    const token = packer.pack(data);
-    const unpacked = packer.unpack(token);
-    expect(unpacked).toEqual({ a: 'foo', b: '', c: '' });
+  it('should mutate token correctly', () => {
+    const original = { userId: '123', username: 'alice', role: 'admin' };
+    const token = packer.pack(original);
+
+    const newToken = packer.mutate(token, { role: 'superadmin' });
+    const unpacked = packer.unpack(newToken);
+    expect(unpacked.role).toBe('superadmin');
+    expect(unpacked.userId).toBe('123');
   });
 
   it('should throw error on unsupported version', () => {
-    const invalidToken = Buffer.from('v2\u001Fhello\u001Fworld\u001F!').toString('base64');
-    // Encode as base64url format:
-    const base64url = invalidToken.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    // 构造一个版本错误的 token
+    const badToken = Buffer.from('v2\u001F123\u001Falice\u001Fadmin').toString('base64');
+    const badTokenUrl = badToken.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-    expect(() => packer.unpack(base64url)).toThrow('Unsupported version: v2');
+    expect(() => packer.unpack(badTokenUrl)).toThrow(QPackerError);
+    expect(() => packer.unpack(badTokenUrl)).toThrow(/Unsupported version/);
   });
 
-  it('should mutate token fields correctly', () => {
-    const data = { a: '1', b: '2', c: '3' };
-    const token = packer.pack(data);
+  it('should throw error on invalid token format', () => {
+    expect(() => packer.unpack('invalid.token.string')).toThrow(QPackerError);
+    expect(() => packer.unpack('invalid.token.string')).toThrow(/Invalid token format/);
+  });
 
-    const mutated = packer.mutate(token, { b: 'changed', c: 'new' });
-    const unpacked = packer.unpack(mutated);
+  it('should throw error on insufficient fields', () => {
+    // 只包含一个字段的payload
+    const partialPayload = Buffer.from('v1\u001Fonlyonefield').toString('base64');
+    const partialPayloadUrl = partialPayload.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
-    expect(unpacked).toEqual({ a: '1', b: 'changed', c: 'new' });
+    expect(() => packer.unpack(partialPayloadUrl)).toThrow(QPackerError);
+    expect(() => packer.unpack(partialPayloadUrl)).toThrow(/expected 3 fields but got 1/);
   });
 });
